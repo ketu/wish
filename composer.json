@@ -1,0 +1,36 @@
+{
+    "name": "veda/wish",
+    "description": "a simple php client for wish merchant api",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "ketu.lai",
+            "email": "ketu.lai@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0",
+        "guzzlehttp/guzzle": "^6.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Veda\\Wish\\": "src/Veda/Wish"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Veda\\Wish\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.0"
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
+    }
+}
