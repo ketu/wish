@@ -118,7 +118,7 @@ class Auth
      * @param $codeType
      * @return array|mixed
      */
-    public function getAccessToken($code, $codeType): array
+    public function getAccessToken($code, $codeType): \stdClass
     {
         if (!in_array($codeType, [self::ACCESS_TOKEN_BY_AUTHORIZE_CODE, self::ACCESS_TOKEN_BY_REFRESH_CODE])) {
             throw new \InvalidArgumentException('grant_type can not be recognized ');
@@ -146,14 +146,11 @@ class Auth
                 'form_params' => $formParams
             ]);
             if ($response->getStatusCode()) {
-                $tokenData = \json_decode($response->getBody(), true);
+                $tokenData = \json_decode($response->getBody());
             }
-            if (isset($tokenData['data'])) {
-                return $tokenData['data'];
-            }
-            throw new \Exception('no token data return');
+            return $tokenData->data;
         } catch (ClientException $e) {
-            throw new \Exception($e->getMessage());
+            throw $e;
             // throw custom exception
         }
     }

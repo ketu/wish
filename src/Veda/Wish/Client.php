@@ -8,6 +8,8 @@ namespace Veda\Wish;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
+use Veda\Wish\Exception\ResponseException;
 use Veda\Wish\Request\RequestAbstract;
 use Veda\Utils\Http\Uri;
 
@@ -40,7 +42,6 @@ class Client
     }
 
 
-
     private function buildUri()
     {
         $apiEndpoint = $this->getRequest()->getConfig()->getApiEndpoint();
@@ -52,10 +53,10 @@ class Client
 
     private function buildParams()
     {
-        if ($this->getRequest()->getMethod() == RequestAbstract::HTTP_METHOD_GET){
-            return ['query'=> $this->getRequest()->getParameters()];
+        if ($this->getRequest()->getMethod() == RequestAbstract::HTTP_METHOD_GET) {
+            return ['query' => $this->getRequest()->getParameters()];
         } elseif ($this->getRequest()->getMethod() == RequestAbstract::HTTP_METHOD_POST) {
-            return ['form_params'=> $this->getRequest()->getParameters()];
+            return ['form_params' => $this->getRequest()->getParameters()];
         }
         return [];
     }
@@ -65,7 +66,7 @@ class Client
         $accessToken = $this->getRequest()->getConfig()->getAccessToken();
 
         return [
-            'Authorization'=> "Bearer {$accessToken}"
+            'Authorization' => "Bearer {$accessToken}"
         ];
     }
 
@@ -76,20 +77,18 @@ class Client
             $uri = $this->buildUri();
             $client = new HttpClient();
             $postOptions = [
-                'headers'=> $this->buildHeaders()
+                'headers' => $this->buildHeaders()
             ];
             $postOptions = array_merge($this->buildParams(), $postOptions);
             $response = $client->request($method, $uri, $postOptions);
-            if ($response->getStatusCode()) {
-                return \json_decode($response->getBody(), true);
-            }
-            throw new \Exception('error');
+            return \json_decode($response->getBody());
 
         } catch (ClientException $e) {
-            throw new \Exception($e->getMessage());
-            // throw custom exception
-        }catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+            throw  new ResponseException($e->getMessage(), $e->getResponse()->getStatusCode(), $e);
+        } catch (ConnectException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw $e;
         }
     }
 }
