@@ -12,16 +12,20 @@ use Veda\Utils\Http\Uri;
 
 class Auth
 {
-    const AUTHORIZATION_ENDPOINT = 'https://sandbox.merchant.wish.com/authorize';
-    const TOKEN_REQUEST_ENDPOINT = 'https://sandbox.merchant.wish.com/api/v2/oauth/access_token';
 
+    const AUTHORIZATION_ENDPOINT = 'https://sandbox.merchant.wish.com/oauth/authorize';
+    const TOKEN_REQUEST_BY_AUTHORIZATION_CODE_ENDPOINT = 'https://sandbox.merchant.wish.com/api/v2/oauth/access_token';
+    const TOKEN_REQUEST_BY_REFRESH_CODE_ENDPOINT = 'https://sandbox.merchant.wish.com/api/v2/oauth/refresh_token';
+
+
+    // grant type
     const ACCESS_TOKEN_BY_AUTHORIZE_CODE = 'authorization_code';
     const ACCESS_TOKEN_BY_REFRESH_CODE = 'refresh_token';
 
     protected $clientId;
     protected $clientSecret;
 
-    protected $redirectUri;
+    protected $redirectUri = 'https://127.0.0.1';
     protected $redirectState;
 
     public function __construct($clientId, $clientSecret)
@@ -33,7 +37,7 @@ class Auth
     /**
      * @return mixed
      */
-    public function getClientId()
+    public function getClientId(): string
     {
         return $this->clientId;
     }
@@ -49,7 +53,7 @@ class Auth
     /**
      * @return mixed
      */
-    public function getClientSecret()
+    public function getClientSecret(): string
     {
         return $this->clientSecret;
     }
@@ -65,7 +69,7 @@ class Auth
     /**
      * @return mixed
      */
-    public function getRedirectUri()
+    public function getRedirectUri(): string
     {
         return $this->redirectUri;
     }
@@ -81,7 +85,7 @@ class Auth
     /**
      * @return mixed
      */
-    public function getRedirectState()
+    public function getRedirectState(): string
     {
         return $this->redirectState;
     }
@@ -97,16 +101,16 @@ class Auth
     /**
      * @return string
      */
-    public function getAuthorizationUrl()
+    public function getAuthorizationUrl(): string
     {
         $uri = Uri::fromString(self::AUTHORIZATION_ENDPOINT);
 
         $query = [
             'client_id' => $this->getClientId()
         ];
-        $uri->withQuery($query);
 
-        return  $uri->__toString();
+        return $uri->withQuery($query);
+
     }
 
     /**
@@ -114,42 +118,43 @@ class Auth
      * @param $codeType
      * @return array|mixed
      */
-    public function getAccessToken($code, $codeType)
+    public function getAccessToken($code, $codeType): array
     {
         if (!in_array($codeType, [self::ACCESS_TOKEN_BY_AUTHORIZE_CODE, self::ACCESS_TOKEN_BY_REFRESH_CODE])) {
             throw new \InvalidArgumentException('grant_type can not be recognized ');
         }
 
+        $formParams = [
+            'grant_type' => $codeType,
+            'client_id' => $this->getClientId(),
+            'client_secret' => $this->getClientSecret(),
+            'redirect_uri' => $this->getRedirectUri(),
+            'code' => $code
+        ];
+
+        $endpoint = self::TOKEN_REQUEST_BY_AUTHORIZATION_CODE_ENDPOINT;
+
+        if ($codeType == self::ACCESS_TOKEN_BY_REFRESH_CODE) {
+            $endpoint = self::TOKEN_REQUEST_BY_REFRESH_CODE_ENDPOINT;
+            $formParams['refresh_token'] = $code;
+        }
+
         $tokenData = [];
         try {
             $client = new Client();
-            $response = $client->post(self::TOKEN_REQUEST_ENDPOINT, [
-                'headers' => [
-                    'Authorization' => 'Basic ' . base64_encode(sprintf("%s:%s", [
-                            $this->getClientId(), $this->getClientSecret()
-                        ]))
-                ],
-                'form_params' => [
-                    'grant_type' => $codeType,
-                    'code' => $code,
-                    'redirect_uri' => $this->getRedirectUri()
-                ]
+            $response = $client->post($endpoint, [
+                'form_params' => $formParams
             ]);
             if ($response->getStatusCode()) {
-                $tokenData = \json_decode($response->getBody());
+                $tokenData = \json_decode($response->getBody(), true);
             }
-            return $tokenData;
+            if (isset($tokenData['data'])) {
+                return $tokenData['data'];
+            }
+            throw new \Exception('no token data return');
         } catch (ClientException $e) {
+            throw new \Exception($e->getMessage());
             // throw custom exception
         }
-    }
-
-    public function getRefreshToken($refreshCode) {
-       /* POST https://merchant.wish.com/api/v2/oauth/refresh_token
-        Parameters
-        client_id	Your app's client ID
-        client_secret	Your app's client secret
-        refresh_token	Your refresh token
-        grant_type	The string 'refresh_token'*/
     }
 }

@@ -8,9 +8,68 @@ namespace Veda\Wish;
 
 class Config
 {
-    //3452432
-    //58d232a0e75a1464a21f6a3a
-    //0e471c5c57b64c48b1a95341f0920a80
 
+    protected $accessToken;
+
+    protected $apiEndpoint = 'https://sandbox.merchant.wish.com';
+
+    protected $apiEndpointVersion = 'api/v2/';
+
+
+    public function __construct($accessToken, $apiEndpoint = null)
+    {
+        $this->accessToken = $accessToken;
+        if ($apiEndpoint) {
+            $this->apiEndpoint = $apiEndpoint;
+        }
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAccessToken()
+    {
+        return $this->accessToken;
+    }
+
+    /**
+     * @param mixed $accessToken
+     */
+    public function setAccessToken($accessToken)
+    {
+        $this->accessToken = $accessToken;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getApiEndpoint()
+    {
+        return $this->apiEndpoint;
+    }
+
+    /**
+     * @param null|string $apiEndpoint
+     */
+    public function setApiEndpoint($apiEndpoint)
+    {
+        $this->apiEndpoint = $apiEndpoint;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApiEndpointVersion(): string
+    {
+        return $this->apiEndpointVersion;
+    }
+
+    /**
+     * @param string $apiEndpointVersion
+     */
+    public function setApiEndpointVersion(string $apiEndpointVersion)
+    {
+        $this->apiEndpointVersion = $apiEndpointVersion;
+    }
 
 }
