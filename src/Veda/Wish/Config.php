@@ -71,5 +71,4 @@ class Config
     {
         $this->apiEndpointVersion = $apiEndpointVersion;
     }
-
 }
